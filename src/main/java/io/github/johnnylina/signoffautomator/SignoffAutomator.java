@@ -18,5 +18,8 @@ public class SignoffAutomator {
             return;
         }
         System.out.println("Execution successful");
+        if (SignoffAutomatorApi.getDebug()) {
+            SignoffAutomatorApi.resetDebug();
+        }
     }
 }

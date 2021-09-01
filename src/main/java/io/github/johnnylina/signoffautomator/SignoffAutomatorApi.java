@@ -2,13 +2,27 @@ package io.github.johnnylina.signoffautomator;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.TimeZone;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
+import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxOptions;
+import org.openqa.selenium.firefox.FirefoxProfile;
+import org.openqa.selenium.firefox.ProfilesIni;
+
+import java.io.File;
 import java.util.Calendar;
 import java.util.Date;
 
 public class SignoffAutomatorApi {
     private static boolean continueExecution = true;
     private static final Map<String, String> env = new HashMap<>();
+    private static boolean debug = false;
 
     public SignoffAutomatorApi() {
         this.Init();
@@ -24,6 +38,7 @@ public class SignoffAutomatorApi {
                 case "DISCORD_PASSWORD":
                 case "DISCORD_SERVER_ID":
                 case "DISCORD_CHANNEL_ID":
+                case "DEBUG":
                     SignoffAutomatorApi.env.put(envEntry.getKey(), envEntry.getValue());
                 default:
             }
@@ -40,16 +55,75 @@ public class SignoffAutomatorApi {
         if (!SignoffAutomatorApi.env.containsKey("DISCORD_CHANNEL_ID")) {
             throw new IllegalArgumentException("No DISCORD_CHANNEL_ID env var set");
         }
+        if (SignoffAutomatorApi.env.containsKey("DEBUG")) {
+            SignoffAutomatorApi.debug = Boolean.parseBoolean(SignoffAutomatorApi.env.getOrDefault("DEBUG", "false"));
+        }
     }
 
     public void execute() throws RuntimeException {
-        Thread autoCloseThread = new Thread(new AutoCloseTimer());
-        autoCloseThread.start();
+        // Load Profile
+        System.out.println("Attempt to load profile");
+        File f = new File("profile");
+        if (!f.exists()) {
+            try {
+                f.mkdir();
+            } catch (Exception e) {
+                throw new RuntimeException("Couldn't create profile folder.");
+            }
+        }
+        if (!f.isDirectory()) {
+            throw new RuntimeException("profile is not a directory");
+        }
+        System.out.println("Creating profile object");
+        FirefoxProfile ffProfile = new FirefoxProfile(f);
 
-        int i = 0;
-        while (SignoffAutomatorApi.continueExecution) {
-            i++;
-            System.out.println("Continue Execution " + i);
+        Thread autoCloseThread = new Thread(new AutoCloseTimer());
+        System.out.println("Start autoclose thread");
+        autoCloseThread.start();
+        System.out.println("Setting options");
+        FirefoxOptions options = new FirefoxOptions();
+        options.setHeadless(!debug);
+        options.setProfile(ffProfile);
+        System.out.println("Init webdriver");
+        WebDriver wd = new FirefoxDriver(options);
+        WebElement temp = null;
+        System.out.println("GET discord.com");
+        wd.get("https://discord.com/channels/" + env.get("DISCORD_SERVER_ID") + "/" + env.get("DISCORD_CHANNEL_ID"));
+
+        // Check if need to login
+        System.out.println("Check login...");
+        if (wd.getCurrentUrl().startsWith("https://discord.com/login")) {
+            System.out.println("Need to login...");
+            try {
+                temp = wd.findElement(
+                        By.cssSelector("input[aria-label='Email or Phone Number'][name='email'][type='text']"));
+            } catch (NoSuchElementException e) {
+                throw new RuntimeException("Cannot find login input");
+            }
+            temp.click();
+            temp.sendKeys(env.get("DISCORD_LOGIN"));
+
+            try {
+                temp = wd.findElement(By.cssSelector("input[aria-label='Password'][name='password'][type='password']"));
+            } catch (NoSuchElementException e) {
+                throw new RuntimeException("Cannot find login input");
+            }
+            temp.click();
+            temp.sendKeys(env.get("DISCORD_PASSWORD"));
+        }
+        // Save cookies and localstorage
+
+        while (wd.getCurrentUrl().startsWith("https://discord.com/login")) {
+            // Wait for login to be done
+        }
+        if (!debug) {
+            wd.quit();
+        } else {
+            System.out.println("Press enter to close");
+            Scanner sc = new Scanner(System.in);
+            sc.nextLine();
+            sc.close();
+            wd.quit();
         }
     }
 
@@ -67,16 +141,22 @@ public class SignoffAutomatorApi {
             sevenPMTodayCal.set(Calendar.MINUTE, 0);
             sevenPMTodayCal.set(Calendar.SECOND, 0);
             Date sevenPMToday = sevenPMTodayCal.getTime();
-            boolean debug;
-            try {
-                debug = Boolean.parseBoolean(SignoffAutomatorApi.env.getOrDefault("DEBUG", "false"));
-            } catch (Exception e) {
-                debug = false;
-            }
 
-            for (Date d = new Date(); d.before(sevenPMToday) || debug; d = new Date()) {
+            for (Date d = new Date(); d.before(sevenPMToday) || SignoffAutomatorApi.debug; d = new Date()) {
             }
             SignoffAutomatorApi.continueExecution = false;
         }
+    }
+
+    public static boolean getDebug() {
+        return debug;
+    }
+
+    public static void resetDebug() {
+        debug = false;
+    }
+
+    public static void setContinueExecution(boolean b) {
+        continueExecution = b;
     }
 }
