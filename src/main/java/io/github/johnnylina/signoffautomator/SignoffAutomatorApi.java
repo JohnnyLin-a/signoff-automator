@@ -7,6 +7,7 @@ import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
@@ -112,9 +113,8 @@ public class SignoffAutomatorApi {
                 throw new RuntimeException("Cannot find login input");
             }
             temp.click();
-            temp.sendKeys(env.get("DISCORD_PASSWORD"));
+            temp.sendKeys(env.get("DISCORD_PASSWORD") + Keys.ENTER);
         }
-        // Save cookies and localstorage
 
         WebDriverWait wait = new WebDriverWait(wd, 30);
         try {
@@ -157,7 +157,7 @@ public class SignoffAutomatorApi {
                     System.out.println("cannot sleep thread for 1s");
                 }
                 // if (SignoffAutomatorApi.debug) {
-                //     System.out.println(d.toString());
+                // System.out.println(d.toString());
                 // }
             }
             SignoffAutomatorApi.continueExecution = false;
