@@ -4,18 +4,21 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 
 import org.openqa.selenium.By;
-import org.openqa.selenium.Keys;
 import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.firefox.FirefoxProfile;
-import org.openqa.selenium.firefox.ProfilesIni;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.io.File;
+import java.time.Duration;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -113,9 +116,13 @@ public class SignoffAutomatorApi {
         }
         // Save cookies and localstorage
 
-        while (wd.getCurrentUrl().startsWith("https://discord.com/login")) {
-            // Wait for login to be done
+        WebDriverWait wait = new WebDriverWait(wd, 30);
+        try {
+            wait.until(ExpectedConditions.urlContains("https://discord.com/channels"));
+        } catch (TimeoutException e) {
+            throw new RuntimeException("Stuck at login, didn't jump to channels");
         }
+
         if (!debug) {
             wd.quit();
         } else {
@@ -125,6 +132,7 @@ public class SignoffAutomatorApi {
             sc.close();
             wd.quit();
         }
+        System.out.println("Api Execution end");
     }
 
     /**
@@ -137,7 +145,7 @@ public class SignoffAutomatorApi {
         public void run() {
             Calendar sevenPMTodayCal = Calendar.getInstance();
             sevenPMTodayCal.setTimeZone(TimeZone.getTimeZone("America/New_York"));
-            sevenPMTodayCal.set(Calendar.HOUR_OF_DAY, 19);
+            sevenPMTodayCal.set(Calendar.HOUR_OF_DAY, 10);
             sevenPMTodayCal.set(Calendar.MINUTE, 0);
             sevenPMTodayCal.set(Calendar.SECOND, 0);
             Date sevenPMToday = sevenPMTodayCal.getTime();
@@ -153,18 +161,15 @@ public class SignoffAutomatorApi {
                 // }
             }
             SignoffAutomatorApi.continueExecution = false;
+            System.out.println("AutoCloseTimer Execution end");
         }
     }
 
     public static boolean getDebug() {
-        return debug;
+        return SignoffAutomatorApi.debug;
     }
 
     public static void resetDebug() {
-        debug = false;
-    }
-
-    public static void setContinueExecution(boolean b) {
-        continueExecution = b;
+        SignoffAutomatorApi.debug = false;
     }
 }

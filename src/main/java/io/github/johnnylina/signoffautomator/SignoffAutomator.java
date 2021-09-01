@@ -17,7 +17,7 @@ public class SignoffAutomator {
             System.exit(1);
             return;
         }
-        System.out.println("Execution successful");
+        System.out.println("Main execution done");
         if (SignoffAutomatorApi.getDebug()) {
             SignoffAutomatorApi.resetDebug();
         }
