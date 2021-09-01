@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
@@ -19,7 +18,6 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.io.File;
-import java.time.Duration;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -116,9 +114,8 @@ public class SignoffAutomatorApi {
             temp.sendKeys(env.get("DISCORD_PASSWORD") + Keys.ENTER);
         }
 
-        WebDriverWait wait = new WebDriverWait(wd, 30);
         try {
-            wait.until(ExpectedConditions.urlContains("https://discord.com/channels"));
+            new WebDriverWait(wd, 30).until(ExpectedConditions.urlContains("https://discord.com/channels"));
         } catch (TimeoutException e) {
             throw new RuntimeException("Stuck at login, didn't jump to channels");
         }
