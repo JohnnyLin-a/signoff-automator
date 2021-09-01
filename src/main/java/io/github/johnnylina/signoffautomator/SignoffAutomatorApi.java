@@ -143,6 +143,14 @@ public class SignoffAutomatorApi {
             Date sevenPMToday = sevenPMTodayCal.getTime();
 
             for (Date d = new Date(); d.before(sevenPMToday) || SignoffAutomatorApi.debug; d = new Date()) {
+                try {
+                    Thread.sleep(1000);
+                } catch (Exception e) {
+                    System.out.println("cannot sleep thread for 1s");
+                }
+                // if (SignoffAutomatorApi.debug) {
+                //     System.out.println(d.toString());
+                // }
             }
             SignoffAutomatorApi.continueExecution = false;
         }
