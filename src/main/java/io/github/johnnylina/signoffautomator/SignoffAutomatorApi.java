@@ -201,19 +201,21 @@ public class SignoffAutomatorApi {
                     temp = wd.findElement(By.cssSelector("#" + currentMsgID));
                     new Actions(wd).moveToElement(temp).moveByOffset(10, 0).perform();
                     try {
-                        temp = wd.findElement(By.cssSelector("#" + currentMsgID + ">div[class^='buttonContainer']>div[class^='buttons']>div[class^='wrapper']>div[class^='button'][aria-label='Add Reaction']"));
+                        temp = wd.findElement(By.cssSelector("#" + currentMsgID
+                                + ">div[class^='buttonContainer']>div[class^='buttons']>div[class^='wrapper']>div[class^='button'][aria-label='Add Reaction']"));
                     } catch (NoSuchElementException e) {
                         throw new RuntimeException("Cannot find add reaction button");
                     }
                     temp.click();
                     try {
-                        temp = wd.findElement(By.cssSelector("#emoji-picker-tab-panel>div[class^='emojiPicker']>div[class^='header']>div[class^='searchBar']>div[class^='inner']>input[class^='input']"));
+                        temp = wd.findElement(By.cssSelector(
+                                "#emoji-picker-tab-panel>div[class^='emojiPicker']>div[class^='header']>div[class^='searchBar']>div[class^='inner']>input[class^='input']"));
 
                     } catch (NoSuchElementException e) {
                         throw new RuntimeException("Cannot find reaction search bar");
                     }
                     temp.click();
-                    temp.sendKeys("wave" + Keys.ENTER);
+                    temp.sendKeys("wa" + Keys.ENTER); // "wa" from "wave" is enough to default pick wave emoji
                 }
             }
         }
@@ -231,7 +233,16 @@ public class SignoffAutomatorApi {
     }
 
     private boolean _containsBye(String s) {
-        return true;
+        if (s.toLowerCase().contains("bye")) {
+            return true;
+        } else if (s.toLowerCase().contains("night")) {
+            return true;
+        } else if (s.toLowerCase().contains("good evening")) {
+            return true;
+        } else if (s.toLowerCase().contains("signing off")) {
+            return true;
+        }
+        return false;
     }
 
     /**
