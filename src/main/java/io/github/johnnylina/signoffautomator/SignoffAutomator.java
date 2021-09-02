@@ -13,9 +13,10 @@ public class SignoffAutomator {
         try {
             api.execute();
         } catch (RuntimeException re) {
-            System.out.println("Error when Executing api" + re.getMessage());
-            System.exit(1);
-            return;
+            System.out.println("Error when Executing api " + re.getMessage());
+            if (SignoffAutomatorApi.getDebug()) {
+                re.printStackTrace();
+            }
         }
         System.out.println("Main execution done");
         if (SignoffAutomatorApi.getDebug()) {
