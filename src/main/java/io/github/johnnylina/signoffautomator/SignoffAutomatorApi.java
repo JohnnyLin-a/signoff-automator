@@ -15,6 +15,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.firefox.FirefoxProfile;
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -44,6 +45,7 @@ public class SignoffAutomatorApi {
                 case "DISCORD_SERVER_ID":
                 case "DISCORD_CHANNEL_ID":
                 case "DEBUG":
+                case "DISCORD_USERNAME":
                     SignoffAutomatorApi.env.put(envEntry.getKey(), envEntry.getValue());
                 default:
             }
@@ -187,9 +189,32 @@ public class SignoffAutomatorApi {
                     throw new RuntimeException("Cannot find message body");
                 }
                 String messageContent = temp.getText();
-                System.out.println("Message found: " + messageContent);
-                // Check if contains any bye signs,
-                // React if needed
+
+                if (debug)
+                    System.out.println("Msg: " + messageContent);
+
+                // Check if contains any bye signs
+                if (_containsBye(messageContent) && !lastMessageAuthor.equalsIgnoreCase(env.get("DISCORD_USERNAME"))) {
+                    if (debug)
+                        System.out.println("Reacting to msg id " + currentMsgID);
+                    // React with :wave:
+                    temp = wd.findElement(By.cssSelector("#" + currentMsgID));
+                    new Actions(wd).moveToElement(temp).moveByOffset(10, 0).perform();
+                    try {
+                        temp = wd.findElement(By.cssSelector("#" + currentMsgID + ">div[class^='buttonContainer']>div[class^='buttons']>div[class^='wrapper']>div[class^='button'][aria-label='Add Reaction']"));
+                    } catch (NoSuchElementException e) {
+                        throw new RuntimeException("Cannot find add reaction button");
+                    }
+                    temp.click();
+                    try {
+                        temp = wd.findElement(By.cssSelector("#emoji-picker-tab-panel>div[class^='emojiPicker']>div[class^='header']>div[class^='searchBar']>div[class^='inner']>input[class^='input']"));
+
+                    } catch (NoSuchElementException e) {
+                        throw new RuntimeException("Cannot find reaction search bar");
+                    }
+                    temp.click();
+                    temp.sendKeys("wave" + Keys.ENTER);
+                }
             }
         }
 
@@ -203,6 +228,10 @@ public class SignoffAutomatorApi {
             wd.quit();
         }
         System.out.println("Api Execution end");
+    }
+
+    private boolean _containsBye(String s) {
+        return true;
     }
 
     /**
