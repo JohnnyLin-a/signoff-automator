@@ -215,7 +215,7 @@ public class SignoffAutomatorApi {
                         throw new RuntimeException("Cannot find reaction search bar");
                     }
                     temp.click();
-                    temp.sendKeys("wa" + Keys.ENTER); // "wa" from "wave" is enough to default pick wave emoji
+                    temp.sendKeys("wav" + Keys.ENTER); // "wav" from "wave" is enough to default pick wave emoji
                 }
             }
         }
