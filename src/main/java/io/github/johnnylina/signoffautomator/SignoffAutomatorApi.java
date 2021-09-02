@@ -255,7 +255,7 @@ public class SignoffAutomatorApi {
         public void run() {
             Calendar sevenPMTodayCal = Calendar.getInstance();
             sevenPMTodayCal.setTimeZone(TimeZone.getTimeZone("America/New_York"));
-            sevenPMTodayCal.set(Calendar.HOUR_OF_DAY, 10);
+            sevenPMTodayCal.set(Calendar.HOUR_OF_DAY, 19);
             sevenPMTodayCal.set(Calendar.MINUTE, 0);
             sevenPMTodayCal.set(Calendar.SECOND, 0);
             Date sevenPMToday = sevenPMTodayCal.getTime();
