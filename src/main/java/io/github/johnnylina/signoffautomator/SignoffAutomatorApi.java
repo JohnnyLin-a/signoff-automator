@@ -1,6 +1,7 @@
 package io.github.johnnylina.signoffautomator;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.TimeZone;
@@ -18,8 +19,10 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.io.File;
+import java.util.ArrayDeque;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Deque;
 
 public class SignoffAutomatorApi {
     private static boolean continueExecution = true;
@@ -113,11 +116,63 @@ public class SignoffAutomatorApi {
             temp.click();
             temp.sendKeys(env.get("DISCORD_PASSWORD") + Keys.ENTER);
         }
+        temp = null;
 
         try {
             new WebDriverWait(wd, 30).until(ExpectedConditions.urlContains("https://discord.com/channels"));
         } catch (TimeoutException e) {
             throw new RuntimeException("Stuck at login, didn't jump to channels");
+        }
+
+        // Wait for messages to appear
+        try {
+            new WebDriverWait(wd, 30)
+                    .until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("div[id^='chat-messages-']")));
+        } catch (TimeoutException e) {
+            throw new RuntimeException("Couldn't find messages list");
+        }
+        // Start main execution here
+        // Find last message at this time:
+        String lastProcessedID = null;
+        WebElement lastProcessedElement = null;
+        List<WebElement> temps = wd.findElements(By.cssSelector("div[id^='chat-messages-']"));
+        lastProcessedElement = temps.get(temps.size() - 1);
+        lastProcessedID = lastProcessedElement.getAttribute("id");
+        System.out.println("Starting from id: " + lastProcessedID);
+        while (continueExecution) {
+            if (debug) {
+                try {
+                    Thread.sleep(1000);
+                } catch (Exception e) {
+                    System.out.println("cannot sleep thread for 1s");
+                }
+            }
+            temps = wd.findElements(By.cssSelector("div[id^='chat-messages-']"));
+            WebElement currentLastElement = temps.get(temps.size() - 1);
+
+            Deque<WebElement> messagesToInspect = new ArrayDeque<>();
+            for (int i = 1;; i++) {
+                WebElement currentElement = temps.get(temps.size() - i);
+                if (currentElement.getAttribute("id").equalsIgnoreCase(lastProcessedID)) {
+                    break;
+                }
+                messagesToInspect.addFirst(currentElement);
+            }
+            lastProcessedID = currentLastElement.getAttribute("id");
+            while (!messagesToInspect.isEmpty()) {
+                temp = messagesToInspect.pop();
+                String currentMsgID = temp.getAttribute("id");
+                try {
+                    temp = wd.findElement(
+                            By.cssSelector("#" + currentMsgID + ">div[class^='contents']>div[class^='markup']"));
+                } catch (NoSuchElementException e) {
+                    throw new RuntimeException("Cannot find message body");
+                }
+                String messageContent = temp.getText();
+                System.out.println("Message found: " + messageContent);
+                // Check if contains any bye signs,
+                // React if needed
+            }
         }
 
         if (!debug) {
