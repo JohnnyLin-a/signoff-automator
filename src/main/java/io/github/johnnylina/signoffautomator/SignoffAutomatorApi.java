@@ -134,34 +134,52 @@ public class SignoffAutomatorApi {
         // Start main execution here
         // Find last message at this time:
         String lastProcessedID = null;
+        String lastMessageAuthor = null;
         WebElement lastProcessedElement = null;
         List<WebElement> temps = wd.findElements(By.cssSelector("div[id^='chat-messages-']"));
         lastProcessedElement = temps.get(temps.size() - 1);
         lastProcessedID = lastProcessedElement.getAttribute("id");
+        // Get last message's author
+        for (int i = 1;; i++) {
+            if (i > temps.size()) {
+                throw new RuntimeException("Cannot get author of last message");
+            }
+            lastProcessedElement = temps.get(temps.size() - i);
+            List<WebElement> anotherTemps = wd.findElements(By.cssSelector("#" + lastProcessedElement.getAttribute("id")
+                    + ">div[class^='contents']>h2[class^='header']>span[class^='headerText']>span[class^='username']"));
+            if (anotherTemps.size() != 0) {
+                lastMessageAuthor = anotherTemps.get(0).getText();
+                System.out.println("Initial last message's author: " + lastMessageAuthor);
+                lastProcessedElement = null; // This variable is no longer used for the rest of the method
+                break;
+            }
+        }
         System.out.println("Starting from id: " + lastProcessedID);
         while (continueExecution) {
-            if (debug) {
-                try {
-                    Thread.sleep(1000);
-                } catch (Exception e) {
-                    System.out.println("cannot sleep thread for 1s");
-                }
-            }
             temps = wd.findElements(By.cssSelector("div[id^='chat-messages-']"));
-            WebElement currentLastElement = temps.get(temps.size() - 1);
+            String currentLastProcessedID = temps.get(temps.size() - 1).getAttribute("id");
 
-            Deque<WebElement> messagesToInspect = new ArrayDeque<>();
+            // Construct dequeue of new messages (DO IT QUICK BEFORE DOM UPDATES!)
+            Deque<String> messageIDsToInspect = new ArrayDeque<>();
             for (int i = 1;; i++) {
-                WebElement currentElement = temps.get(temps.size() - i);
-                if (currentElement.getAttribute("id").equalsIgnoreCase(lastProcessedID)) {
+                String currentElementID = temps.get(temps.size() - i).getAttribute("id");
+                if (currentElementID.equalsIgnoreCase(lastProcessedID)) {
                     break;
                 }
-                messagesToInspect.addFirst(currentElement);
+                messageIDsToInspect.addFirst(currentElementID);
             }
-            lastProcessedID = currentLastElement.getAttribute("id");
-            while (!messagesToInspect.isEmpty()) {
-                temp = messagesToInspect.pop();
-                String currentMsgID = temp.getAttribute("id");
+            lastProcessedID = currentLastProcessedID;
+            while (!messageIDsToInspect.isEmpty()) {
+                String currentMsgID = messageIDsToInspect.pop();
+
+                // Update last message sent if any
+                List<WebElement> anotherTemps = wd.findElements(By.cssSelector("#" + currentMsgID
+                        + ">div[class^='contents']>h2[class^='header']>span[class^='headerText']>span[class^='username']"));
+                if (anotherTemps.size() != 0) {
+                    lastMessageAuthor = anotherTemps.get(0).getText();
+                }
+
+                // Get message body
                 try {
                     temp = wd.findElement(
                             By.cssSelector("#" + currentMsgID + ">div[class^='contents']>div[class^='markup']"));
