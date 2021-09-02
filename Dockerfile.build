@@ -1,0 +1,7 @@
+FROM maven:3-eclipse-temurin-16 AS mvn-lib
+
+# maven binary location: /usr/share/maven/bin/mvn
+# maven lib location: /usr/share/maven
+
+FROM eclipse-temurin:16-focal
+COPY --from=mvn-lib /usr/share/maven /usr/share/maven
