@@ -3,7 +3,3 @@ FROM ubuntu:20.04
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y firefox firefox-geckodriver openjdk-16-jre-headless
-
-COPY --from=jdk-lib /usr/local/openjdk-16 /usr/local/openjdk-16
-
-ENV PATH="/usr/local/openjdk-16/bin:${PATH}"
