@@ -3,5 +3,8 @@ FROM maven:3-adoptopenjdk-16 AS mvn-lib
 # maven binary location: /usr/share/maven/bin/mvn
 # maven lib location: /usr/share/maven
 
-FROM openjdk:16-slim
+FROM ubuntu:20.04
 COPY --from=mvn-lib /usr/share/maven /usr/share/maven
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y openjdk-16-jre-headless
