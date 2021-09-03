@@ -1,13 +1,11 @@
-FROM openjdk:16-slim
+FROM openjdk:16-slim as jdk-lib
 
-ENV TZ="America/New_York" DEBIAN_FRONTEND=noninteractive
+FROM ubuntu:20.04
 
-# configure tz, install pre-requisites
-RUN cd /root && echo $TZ > /etc/timezone && \
-    apt-get update && \
+RUN apt-get update && \
     apt-get upgrade -y && \
-    apt-get install -y tzdata firefox firefox-geckodriver && \
-    rm /etc/localtime && \
-    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
-    dpkg-reconfigure -f noninteractive tzdata && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get install -y firefox firefox-geckodriver
+
+COPY --from=jdk-lib /usr/local/openjdk-16 /usr/local/openjdk-16
+
+ENV PATH="/usr/local/openjdk-16/bin:${PATH}"
