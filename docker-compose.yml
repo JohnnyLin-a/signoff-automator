@@ -1,0 +1,12 @@
+version: "3.9"
+
+services:
+  signoff-automator:
+    build:
+      context: .
+      dockerfile: Dockerfile.run
+    volumes:
+      - ./:/root/src
+    working_dir: /root/src
+    env_file: .env
+    command: bash -c "java -jar ./target/signoffautomator-*.jar"
