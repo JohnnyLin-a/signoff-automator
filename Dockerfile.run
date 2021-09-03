@@ -1,4 +1,4 @@
-FROM eclipse-temurin:16-focal
+FROM openjdk:16-slim
 
 ENV TZ="America/New_York" DEBIAN_FRONTEND=noninteractive
 
