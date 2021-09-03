@@ -1,4 +1,4 @@
-FROM --platform=amd64 maven:3-openjdk-16-slim AS mvn-lib
+FROM --platform=linux/amd64 maven:3-openjdk-16-slim AS mvn-lib
 
 # maven binary location: /usr/share/maven/bin/mvn
 # maven lib location: /usr/share/maven
