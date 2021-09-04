@@ -2,6 +2,7 @@ version: "3.9"
 
 services:
   signoff-automator:
+    container_name: signoff-automator
     image: maven-jdk-16
     volumes:
       - ./:/root/src

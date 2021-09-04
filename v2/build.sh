@@ -5,3 +5,5 @@ if [[ ! -f "$FILE" ]]; then
 fi
 
 # TODO: docker image, build app, setup ubuntu ff
+docker run --rm -w /root/src/v2 -v $(pwd):/root/src/v2 golang:1.17-bullseye bash -c "go build ./cmd/signoffautomator/signoffautomator.go"
+docker buildx build --load -t ubuntu_ff .
