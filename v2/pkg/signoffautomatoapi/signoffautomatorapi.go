@@ -226,11 +226,6 @@ func Execute() error {
 					if err != nil {
 						return errors.New("cannot move mouse for react")
 					}
-					// 			try {
-					// 				temp = wd.FindElement(selenium.ByCSSSelector,("#" + currentMsgID + ">div[class^='buttonContainer']>div[class^='buttons']>div[class^='wrapper']>div[class^='button'][aria-label='Add Reaction']"))
-					// 			} catch (NoSuchElementException e) {
-					// 				return errors.New("Cannot find add reaction button")
-					// 			}
 					temp, err = wd.FindElement(selenium.ByCSSSelector, "#"+currentMsgID+">div[class^='buttonContainer']>div[class^='buttons']>div[class^='wrapper']>div[class^='button'][aria-label='Add Reaction']")
 					if err != nil {
 						return errors.New("cannot find add reaction button")
