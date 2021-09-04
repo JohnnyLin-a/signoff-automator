@@ -70,7 +70,7 @@ func Execute() error {
 		geckoDriverPath = "/usr/bin/geckodriver"
 		port            = 4444
 	)
-	selenium.SetDebug(debug)
+	selenium.SetDebug(false)
 	opts := []selenium.ServiceOption{}
 	if debug {
 		opts = append(opts, selenium.Output(os.Stderr))
@@ -214,36 +214,49 @@ func Execute() error {
 
 			if debug {
 				log.Println("Msg: " + messageContent)
-
-				// Check if contains any bye signs
-				if containsBye(messageContent) && lastMessageAuthor != os.Getenv("DISCORD_USERNAME") {
-					if debug {
-						log.Println("Reacting to msg id " + currentMsgID)
-					}
-					// React with :wave:
-					temp, _ = wd.FindElement(selenium.ByCSSSelector, "#"+currentMsgID)
-					err = temp.MoveTo(10, 0)
-					if err != nil {
-						return errors.New("cannot move mouse for react")
-					}
-					temp, err = wd.FindElement(selenium.ByCSSSelector, "#"+currentMsgID+">div[class^='buttonContainer']>div[class^='buttons']>div[class^='wrapper']>div[class^='button'][aria-label='Add Reaction']")
-					if err != nil {
-						return errors.New("cannot find add reaction button")
-					}
-					temp.Click()
-
-					temp, err = wd.FindElement(selenium.ByCSSSelector, ("#emoji-picker-tab-panel>div[class^='emojiPicker']>div[class^='header']>div[class^='searchBar']>div[class^='inner']>input[class^='input']"))
-					if err != nil {
-						return errors.New("cannot find reaction search bar")
-					}
-					temp.Click()
-					temp.SendKeys("wav" + selenium.EnterKey) // "wav" from "wave" is enough to default pick wave emoji
-				}
 			}
+			// Check if contains any bye signs
+			if containsBye(messageContent) && lastMessageAuthor != os.Getenv("DISCORD_USERNAME") {
+				if debug {
+					log.Println("Reacting to msg id " + currentMsgID)
+				}
+				// React with :wave:
+				temp, _ = wd.FindElement(selenium.ByCSSSelector, "#"+currentMsgID)
+				temp.Click()
+				temp.SendKeys(selenium.RightArrowKey)
+				temp2, err := wd.FindElement(selenium.ByCSSSelector, "#"+currentMsgID+">div[class^='buttonContainer']>div[class^='buttons']>div[class^='wrapper']>div[class^='button'][aria-label='Add Reaction']")
+				if err != nil {
+					return errors.New("cannot find add reaction button")
+				}
+				temp2.Click()
+				temp2.Click()
+				err = wd.WaitWithTimeoutAndInterval(func(wd selenium.WebDriver) (bool, error) {
+					_, err := wd.FindElement(selenium.ByCSSSelector, ("#emoji-picker-tab-panel>div[class^='emojiPicker']>div[class^='header']>div[class^='searchBar']>div[class^='inner']>input[class^='input']"))
+					if err != nil {
+						temp.Click()
+						temp.SendKeys(selenium.RightArrowKey)
+						temp2.Click()
+						temp2.Click()
+						return false, nil
+					}
+					return true, nil
+				}, 5*time.Second, time.Second/2)
+				if err != nil {
+					// Skip cuz golang is iffy cuz of selenium server java
+					continue
+				}
+
+				temp, err = wd.FindElement(selenium.ByCSSSelector, ("#emoji-picker-tab-panel>div[class^='emojiPicker']>div[class^='header']>div[class^='searchBar']>div[class^='inner']>input[class^='input']"))
+				if err != nil {
+					return errors.New("cannot find reaction search bar")
+				}
+				temp.Click()
+				temp.SendKeys("wav" + selenium.EnterKey) // "wav" from "wave" is enough to default pick wave emoji
+			}
+
 		}
-		log.Println("Api Execution end")
-		// return nil
 	}
+	log.Println("Api Execution end")
 	return nil
 }
 
@@ -277,7 +290,7 @@ func autoCloseTimer() {
 	now := time.Now().In(ny)
 	sevenPMToday := time.Date(now.Year(), now.Month(), now.Day(), 19, 0, 0, 0, ny)
 
-	for now = time.Now(); now.Before(sevenPMToday) || debug; now = time.Now() {
+	for now = time.Now(); now.Before(sevenPMToday) || debug || true; now = time.Now() {
 		time.Sleep(1 * time.Second)
 		// if debug {
 		// 	log.Println(now.String())
