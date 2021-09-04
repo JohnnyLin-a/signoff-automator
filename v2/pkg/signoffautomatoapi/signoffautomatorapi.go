@@ -81,9 +81,7 @@ func Execute() error {
 	}
 	defer service.Stop()
 	caps := selenium.Capabilities{}
-	caps.AddFirefox(firefox.Capabilities{
-		Args: []string{"--headless"},
-	})
+	caps.AddFirefox(ffCapabilities)
 	wd, err := selenium.NewRemote(caps, "http://localhost:"+strconv.Itoa(port))
 	if err != nil {
 		return errors.New("cannot start selenium service")
@@ -286,9 +284,9 @@ func autoCloseTimer() {
 
 	for now = time.Now(); now.Before(sevenPMToday) || debug; now = time.Now() {
 		time.Sleep(1 * time.Second)
-		if debug {
-			log.Println(now.String())
-		}
+		// if debug {
+		// 	log.Println(now.String())
+		// }
 	}
 	continueExecution = false
 	log.Println("AutoCloseTimer Execution end")

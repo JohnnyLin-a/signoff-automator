@@ -5,7 +5,7 @@ services:
     container_name: signoff-automator-v2
     image: ubuntu_ff
     volumes:
-      - ./:/root/src/v2
+      - ../:/root/src/
     working_dir: /root/src/v2
     env_file: ../.env
     command: bash -c "./signoffautomator"
