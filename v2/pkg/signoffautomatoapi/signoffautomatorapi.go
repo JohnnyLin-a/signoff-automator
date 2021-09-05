@@ -240,7 +240,7 @@ func Execute() error {
 						return false, nil
 					}
 					return true, nil
-				}, 5*time.Second, time.Second/2)
+				}, 10*time.Second, time.Second/2)
 				if err != nil {
 					// Skip cuz golang is iffy cuz of selenium server java
 					continue
