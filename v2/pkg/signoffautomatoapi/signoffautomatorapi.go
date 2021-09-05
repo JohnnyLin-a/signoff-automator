@@ -84,7 +84,7 @@ func Execute() error {
 	caps.AddFirefox(ffCapabilities)
 	wd, err := selenium.NewRemote(caps, "http://localhost:"+strconv.Itoa(port))
 	if err != nil {
-		return errors.New("cannot start selenium service")
+		return errors.New("cannot start selenium service " + err.Error())
 	}
 	defer wd.Quit()
 	var temp selenium.WebElement
