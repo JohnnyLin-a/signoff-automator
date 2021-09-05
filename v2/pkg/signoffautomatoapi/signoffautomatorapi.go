@@ -290,7 +290,7 @@ func autoCloseTimer() {
 	now := time.Now().In(ny)
 	sevenPMToday := time.Date(now.Year(), now.Month(), now.Day(), 19, 0, 0, 0, ny)
 
-	for now = time.Now(); now.Before(sevenPMToday) || debug || true; now = time.Now() {
+	for now = time.Now(); now.Before(sevenPMToday) || debug; now = time.Now() {
 		time.Sleep(1 * time.Second)
 		// if debug {
 		// 	log.Println(now.String())

@@ -9,3 +9,4 @@ services:
     working_dir: /root/src/v2
     env_file: ../.env
     command: bash -c "./signoffautomator"
+    restart: "on-failure"
