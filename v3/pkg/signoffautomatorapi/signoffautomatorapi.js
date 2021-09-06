@@ -1,4 +1,5 @@
-const {Builder, WebDriver} = require('selenium-webdriver');
+const {Builder, By, Key} = require('selenium-webdriver');
+const {NoSuchElementError} = require('selenium-webdriver/lib/error');
 const firefox = require('selenium-webdriver/firefox');
 const fs = require('fs');
 const { Driver } = require('selenium-webdriver/chrome');
@@ -79,7 +80,7 @@ class SignoffAutomatorApi {
             .setFirefoxOptions(ffOptions)
             .build()
         
-        // var temp selenium.WebElement
+        let temp;
         console.log("GET discord.com")
         await wd.get("https://discord.com/channels/" + this.#env.DISCORD_SERVER_ID + "/" + this.#env.DISCORD_CHANNEL_ID)
 
@@ -88,32 +89,12 @@ class SignoffAutomatorApi {
         let currentURL = await wd.getCurrentUrl();
         if (currentURL.startsWith("https://discord.com/login")) {
             console.log("Need to login...")
-        //     temp, err = wd.FindElement(selenium.ByCSSSelector, "input[aria-label='Email or Phone Number'][name='email'][type='text']")
-        //     if err != nil {
-        //         return errors.New("cannot find login input")
-        //     }
-        //     err = temp.Click()
-        //     if err != nil {
-        //         return errors.New("cannot focus login input")
-        //     }
-        //     err = temp.SendKeys(os.Getenv("DISCORD_LOGIN"))
-        //     if err != nil {
-        //         return errors.New("cannot type in login")
-        //     }
-        //     temp, err = wd.FindElement(selenium.ByCSSSelector, "input[aria-label='Password'][name='password'][type='password']")
-        //     if err != nil {
-        //         return errors.New("cannot find password input")
-        //     }
-        //     err = temp.Click()
-        //     if err != nil {
-        //         return errors.New("cannot focus password input")
-        //     }
-        //     err = temp.SendKeys(os.Getenv("DISCORD_PASSWORD") + selenium.EnterKey)
-        //     if err != nil {
-        //         return errors.New("cannot type in password")
-        //     }
+            // findElement throws an exception for us if the element is not found
+            temp = await wd.findElement(By.css("input[aria-label='Email or Phone Number'][name='email'][type='text']"))
+            await temp.click();
+            await temp.sendKeys(this.#env.DISCORD_LOGIN + Key.TAB + this.#env.DISCORD_PASSWORD + Key.ENTER)
         }
-        // temp = nil
+        temp = null
 
         // err = wd.WaitWithTimeout(func(wd selenium.WebDriver) (bool, error) {
         //     t, _ := wd.CurrentURL()
