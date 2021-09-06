@@ -1,0 +1,12 @@
+version: "3.9"
+
+services:
+  signoff-automator-v3:
+    container_name: signoff-automator-v3
+    image: node_ubuntu_ff
+    volumes:
+      - ../:/root/src/
+    working_dir: /root/src/v3
+    env_file: ../.env
+    command: bash -c "node ./cmd/signoffautomator/signoffautomator.js"
+    restart: "on-failure"
