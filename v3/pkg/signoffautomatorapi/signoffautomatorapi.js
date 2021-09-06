@@ -1,9 +1,10 @@
 const { Builder, By, Key, until } = require('selenium-webdriver');
-const firefox, { Driver } = require('selenium-webdriver/firefox');
+const firefox = require('selenium-webdriver/firefox');
 const fs = require('fs');
 
 class SignoffAutomatorApi {
     static #debug = false
+    static #timeout = null
     #env = {
         DISCORD_LOGIN: "",
         DISCORD_PASSWORD: "",
@@ -64,6 +65,7 @@ class SignoffAutomatorApi {
         console.log("Creating profile object")
         let ffOptions = new firefox.Options()
         ffOptions.setProfile("../profile")
+        ffOptions.addArguments(["--width=1920", "--height=1080"])
 
         console.log("Start autoclose thread (timeout in js)")
         this.#autoCloseTimer()
@@ -78,7 +80,8 @@ class SignoffAutomatorApi {
             .setFirefoxOptions(ffOptions)
             .build()
 
-        let temp;
+        let temp
+        let temp2
         console.log("GET discord.com")
         await wd.get("https://discord.com/channels/" + this.#env.DISCORD_SERVER_ID + "/" + this.#env.DISCORD_CHANNEL_ID)
 
@@ -107,10 +110,11 @@ class SignoffAutomatorApi {
         }
         // Start main execution here
         // Find last message at this time:
-        let lastProcessedID;
-        let lastMessageAuthor;
-        let lastProcessedElement;
-        let temps;
+        let lastProcessedID
+        let lastMessageAuthor
+        let lastProcessedElement
+        let temps
+        let anotherTemps
         temps = await wd.findElements(By.css("div[id^='chat-messages-']"))
         if (temps.length == 0) {
             throw { message: "cannot get messageIDs a second time!?" }
@@ -119,98 +123,68 @@ class SignoffAutomatorApi {
         lastProcessedID = await lastProcessedElement.getAttribute("id")
         // Get last message's author
         for (let i = 1; ; i++) {
-            //     if i > len(temps) {
-            //         throw {message: "cannot get author of last message")
-            //     }
-            //     lastProcessedElement = temps[len(temps)-i]
-            //     lastProcessedElementID, _ := lastProcessedElement.GetAttribute("id")
-            //     anotherTemps, err := wd.FindElements(selenium.ByCSSSelector, "#"+lastProcessedElementID+">div[class^='contents']>h2[class^='header']>span[class^='headerText']>span[class^='username']")
-            //     if err != nil {
-            //         throw {message: "cannot get anotherTemps")
-            //     }
-            //     if len(anotherTemps) != 0 {
-            //         lastMessageAuthor, _ = anotherTemps[0].Text()
-            //         console.log("Initial last message's author: " + lastMessageAuthor)
-            //         lastProcessedElement = nil // This variable is no longer used for the rest of the method
-            //         break
-            //     }
-            // }
-            // console.log("Starting from id: " + lastProcessedID)
-            // for continueExecution {
-            //     temps, _ = wd.FindElements(selenium.ByCSSSelector, "div[id^='chat-messages-']")
-            //     currentLastProcessedID, _ := temps[len(temps)-1].GetAttribute("id")
+            if (i > temps.length) {
+                throw { message: "cannot get author of last message" }
+            }
+            lastProcessedElement = temps[temps.length - i]
+            anotherTemps = await wd.findElements(By.css("#" + (await lastProcessedElement.getAttribute("id")) + ">div[class^='contents']>h2[class^='header']>span[class^='headerText']>span[class^='username']"))
+            if (anotherTemps.length != 0) {
+                lastMessageAuthor = await anotherTemps[0].getText()
+                console.log("Initial last message's author: " + lastMessageAuthor)
+                lastProcessedElement = null // This variable is no longer used for the rest of the method
+                break
+            }
+        }
+        console.log("Starting from id: " + lastProcessedID)
+        while (this.#continueExecution) {
+            temps = await wd.findElements(By.css("div[id^='chat-messages-']"))
+            let currentLastProcessedID = await temps[temps.length - 1].getAttribute("id")
 
-            //     // Construct dequeue of new messages (DO IT QUICK BEFORE DOM UPDATES!)
-            //     messageIDsToInspect := []string{}
-            //     for i := 1; ; i++ {
-            //         currentElementID, _ := temps[len(temps)-i].GetAttribute("id")
-            //         if currentElementID == lastProcessedID {
-            //             break
-            //         }
-            //         messageIDsToInspect = append([]string{currentElementID}, messageIDsToInspect...)
-            //     }
+            // Construct dequeue of new messages (DO IT QUICK BEFORE DOM UPDATES!)
+            let messageIDsToInspect = []
+            for (let i = 1; ; i++) {
+                let currentElementID = await temps[temps.length - i].getAttribute("id")
+                if (currentElementID == lastProcessedID) {
+                    break
+                }
+                messageIDsToInspect.push(currentElementID)
+            }
 
-            //     lastProcessedID = currentLastProcessedID
-            //     for len(messageIDsToInspect) != 0 {
-            //         var currentMsgID string
-            //         currentMsgID, messageIDsToInspect = messageIDsToInspect[0], messageIDsToInspect[1:]
+            lastProcessedID = currentLastProcessedID
+            while (messageIDsToInspect.length != 0) {
+                let currentMsgID = messageIDsToInspect.pop();
+                // Update last message sent if any
+                anotherTemps = await wd.findElements(By.css("#" + currentMsgID + ">div[class^='contents']>h2[class^='header']>span[class^='headerText']>span[class^='username']"))
+                if (anotherTemps.length != 0) {
+                    lastMessageAuthor = await anotherTemps[0].getText()
+                }
 
-            //         // Update last message sent if any
-            //         anotherTemps, _ := wd.FindElements(selenium.ByCSSSelector, "#"+currentMsgID+">div[class^='contents']>h2[class^='header']>span[class^='headerText']>span[class^='username']")
-            //         if len(anotherTemps) != 0 {
-            //             lastMessageAuthor, _ = anotherTemps[0].Text()
-            //         }
+                // Get message body
+                temp = await wd.findElement(By.css("#" + currentMsgID + ">div[class^='contents']>div[class^='markup']"))
+                let messageContent = await temp.getText()
 
-            //         // Get message body
-            //         temp, err = wd.FindElement(selenium.ByCSSSelector, "#"+currentMsgID+">div[class^='contents']>div[class^='markup']")
-            //         if err != nil {
-            //             throw {message: "cannot find message body")
-            //         }
-            //         messageContent, _ := temp.Text()
-
-            //         if debug {
-            //             console.log("Msg: " + messageContent)
-            //         }
-            //         // Check if contains any bye signs
-            //         if containsBye(messageContent) && lastMessageAuthor != os.Getenv("DISCORD_USERNAME") {
-            //             if debug {
-            //                 console.log("Reacting to msg id " + currentMsgID)
-            //             }
-            //             // React with :wave:
-            //             temp, _ = wd.FindElement(selenium.ByCSSSelector, "#"+currentMsgID)
-            //             temp.Click()
-            //             temp.SendKeys(selenium.RightArrowKey)
-            //             temp2, err := wd.FindElement(selenium.ByCSSSelector, "#"+currentMsgID+">div[class^='buttonContainer']>div[class^='buttons']>div[class^='wrapper']>div[class^='button'][aria-label='Add Reaction']")
-            //             if err != nil {
-            //                 throw {message: "cannot find add reaction button")
-            //             }
-            //             temp2.Click()
-            //             temp2.Click()
-            //             err = wd.WaitWithTimeoutAndInterval(func(wd selenium.WebDriver) (bool, error) {
-            //                 _, err := wd.FindElement(selenium.ByCSSSelector, ("#emoji-picker-tab-panel>div[class^='emojiPicker']>div[class^='header']>div[class^='searchBar']>div[class^='inner']>input[class^='input']"))
-            //                 if err != nil {
-            //                     temp.Click()
-            //                     temp.SendKeys(selenium.RightArrowKey)
-            //                     temp2.Click()
-            //                     temp2.Click()
-            //                     return false, nil
-            //                 }
-            //                 return true, nil
-            //             }, 10*time.Second, time.Second/2)
-            //             if err != nil {
-            //                 // Skip cuz golang is iffy cuz of selenium server java
-            //                 continue
-            //             }
-
-            //             temp, err = wd.FindElement(selenium.ByCSSSelector, ("#emoji-picker-tab-panel>div[class^='emojiPicker']>div[class^='header']>div[class^='searchBar']>div[class^='inner']>input[class^='input']"))
-            //             if err != nil {
-            //                 throw {message: "cannot find reaction search bar")
-            //             }
-            //             temp.Click()
-            //             temp.SendKeys("wav" + selenium.EnterKey) // "wav" from "wave" is enough to default pick wave emoji
-            //         }
-
-            //     }
+                if (SignoffAutomatorApi.#debug) {
+                    console.log("Msg: " + messageContent)
+                }
+                // Check if contains any bye signs
+                if (this.#containsBye(messageContent) && lastMessageAuthor != this.#env.DISCORD_USERNAME) {
+                    if (SignoffAutomatorApi.#debug) {
+                        console.log("Reacting to msg id " + currentMsgID)
+                    }
+                    // React with :wave:
+                    temp = await wd.findElement(By.css("#" + currentMsgID))
+                    // await wd.actions().move({ origin: temp }).move({ origin: temp, x: 30, y: 0 }).perform()
+                    await wd.actions().move({ origin: temp }).move({ origin: temp, x: 30, y: -5 }).press().sendKeys(Key.ARROW_RIGHT).perform()
+                    temp2 = await wd.findElement(By.css("#" + currentMsgID + ">div[class^='buttonContainer']>div[class^='buttons']>div[class^='wrapper']>div[class^='button'][aria-label='Add Reaction']"))
+                    await wd.wait(until.elementLocated(By.css("#" + currentMsgID + ">div[class^='buttonContainer']>div[class^='buttons']>div[class^='wrapper']>div[class^='button'][aria-label='Add Reaction']")), 5000)
+                    temp2.click()
+                    temp2.click()
+                    await wd.wait(until.elementLocated(By.css("#emoji-picker-tab-panel>div[class^='emojiPicker']>div[class^='header']>div[class^='searchBar']>div[class^='inner']>input[class^='input']")), 5000)
+                    temp = await wd.findElement(By.css(("#emoji-picker-tab-panel>div[class^='emojiPicker']>div[class^='header']>div[class^='searchBar']>div[class^='inner']>input[class^='input']")))
+                    temp.click()
+                    temp.sendKeys("wav" + Key.ENTER) // "wav" from "wave" is enough to default pick wave emoji
+                }
+            }
         }
         console.log("Api Execution end")
     }
@@ -249,7 +223,7 @@ class SignoffAutomatorApi {
             console.log("DEBUG: AutoCloseTimer 1hr")
             sleep = 3600000
         }
-        setTimeout(() => {
+        SignoffAutomatorApi.#timeout = setTimeout(() => {
             SignoffAutomatorApi.#continueExecution = false
             console.log("AutoCloseTimer Execution end")
         }, sleep)
@@ -261,8 +235,10 @@ class SignoffAutomatorApi {
         return SignoffAutomatorApi.#debug
     }
 
-    static resetDebug() {
-        SignoffAutomatorApi.#debug = false
+    static resetTimeout() {
+        if (SignoffAutomatorApi.#timeout != null) {
+            clearTimeout(SignoffAutomatorApi.#timeout)
+        }
     }
 }
 

@@ -15,7 +15,7 @@ let main = async function() {
     }
     console.log("Main execution done");
     if (SignoffAutomatorApi.getDebug()) {
-        SignoffAutomatorApi.resetDebug();
+        SignoffAutomatorApi.resetTimeout();
     }
 }
 
