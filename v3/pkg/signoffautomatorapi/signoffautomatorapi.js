@@ -1,8 +1,6 @@
-const {Builder, By, Key} = require('selenium-webdriver');
-const {NoSuchElementError} = require('selenium-webdriver/lib/error');
-const firefox = require('selenium-webdriver/firefox');
+const { Builder, By, Key, until } = require('selenium-webdriver');
+const firefox, { Driver } = require('selenium-webdriver/firefox');
 const fs = require('fs');
-const { Driver } = require('selenium-webdriver/chrome');
 
 class SignoffAutomatorApi {
     static #debug = false
@@ -20,32 +18,32 @@ class SignoffAutomatorApi {
     constructor() {
         this.init()
     };
-    
+
     init() {
         if (process.env.DISCORD_LOGIN) {
             this.#env.DISCORD_LOGIN = process.env.DISCORD_LOGIN
         } else {
-            throw { message: "no DISCORD_LOGIN env var"}
+            throw { message: "no DISCORD_LOGIN env var" }
         }
         if (process.env.DISCORD_PASSWORD) {
             this.#env.DISCORD_PASSWORD = process.env.DISCORD_PASSWORD
         } else {
-            throw { message: "no DISCORD_PASSWORD env var"}
+            throw { message: "no DISCORD_PASSWORD env var" }
         }
         if (process.env.DISCORD_SERVER_ID) {
             this.#env.DISCORD_SERVER_ID = process.env.DISCORD_SERVER_ID
         } else {
-            throw { message: "no DISCORD_SERVER_ID env var"}
+            throw { message: "no DISCORD_SERVER_ID env var" }
         }
         if (process.env.DISCORD_CHANNEL_ID) {
             this.#env.DISCORD_CHANNEL_ID = process.env.DISCORD_CHANNEL_ID
         } else {
-            throw { message: "no DISCORD_CHANNEL_ID env var"}
+            throw { message: "no DISCORD_CHANNEL_ID env var" }
         }
         if (process.env.DISCORD_USERNAME) {
             this.#env.DISCORD_USERNAME = process.env.DISCORD_USERNAME
         } else {
-            throw { message: "no DISCORD_USERNAME env var"}
+            throw { message: "no DISCORD_USERNAME env var" }
         }
         if (process.env.DEBUG) {
             SignoffAutomatorApi.#debug = process.env.DEBUG.toLowerCase() === "true"
@@ -60,7 +58,7 @@ class SignoffAutomatorApi {
         console.log("Attempt to load profile")
 
         if (!fs.existsSync("../profile")) {
-            throw { message: "profile doesnt exist"}
+            throw { message: "profile doesnt exist" }
         }
 
         console.log("Creating profile object")
@@ -74,12 +72,12 @@ class SignoffAutomatorApi {
         if (!SignoffAutomatorApi.#debug) {
             ffOptions.setHeadless(true)
         }
-        /** @var {firefox.Driver} wd */
-        let wd = new Builder()
+
+        let wd = await new Builder()
             .forBrowser("firefox")
             .setFirefoxOptions(ffOptions)
             .build()
-        
+
         let temp;
         console.log("GET discord.com")
         await wd.get("https://discord.com/channels/" + this.#env.DISCORD_SERVER_ID + "/" + this.#env.DISCORD_CHANNEL_ID)
@@ -96,141 +94,125 @@ class SignoffAutomatorApi {
         }
         temp = null
 
-        // err = wd.WaitWithTimeout(func(wd selenium.WebDriver) (bool, error) {
-        //     t, _ := wd.CurrentURL()
-        //     if strings.HasPrefix(t, "https://discord.com/channels") {
-        //         return true, nil
-        //     }
-        //     return false, nil
-        // }, 30*time.Second)
-        // if err != nil {
-        //     return errors.New("stuck at login, didn't jump to channels")
-        // }
-        // // Wait for messages to appear
-        // err = wd.WaitWithTimeout(func(wd selenium.WebDriver) (bool, error) {
-        //     t, err := wd.FindElements(selenium.ByCSSSelector, "div[id^='chat-messages-']")
-        //     if err != nil {
-        //         return false, nil
-        //     }
-        //     if len(t) > 0 {
-        //         return true, nil
-        //     }
-        //     return false, nil
-        // }, 30*time.Second)
-        // if err != nil {
-        //     return errors.New("cannot get messageIDs after 30 seconds")
-        // }
-        // // Start main execution here
-        // // Find last message at this time:
-        // var lastProcessedID string
-        // var lastMessageAuthor string
-        // var lastProcessedElement selenium.WebElement
-        // temps, err := wd.FindElements(selenium.ByCSSSelector, "div[id^='chat-messages-']")
-        // if err != nil || len(temps) == 0 {
-        //     return errors.New("cannot get messageIDs a second time!?")
-        // }
-        // lastProcessedElement = temps[len(temps)-1]
-        // lastProcessedID, err = lastProcessedElement.GetAttribute("id")
-        // if err != nil {
-        //     return errors.New("cannot get lastProcessedID")
-        // }
-        // // Get last message's author
-        // for i := 1; ; i++ {
-        //     if i > len(temps) {
-        //         return errors.New("cannot get author of last message")
-        //     }
-        //     lastProcessedElement = temps[len(temps)-i]
-        //     lastProcessedElementID, _ := lastProcessedElement.GetAttribute("id")
-        //     anotherTemps, err := wd.FindElements(selenium.ByCSSSelector, "#"+lastProcessedElementID+">div[class^='contents']>h2[class^='header']>span[class^='headerText']>span[class^='username']")
-        //     if err != nil {
-        //         return errors.New("cannot get anotherTemps")
-        //     }
-        //     if len(anotherTemps) != 0 {
-        //         lastMessageAuthor, _ = anotherTemps[0].Text()
-        //         console.log("Initial last message's author: " + lastMessageAuthor)
-        //         lastProcessedElement = nil // This variable is no longer used for the rest of the method
-        //         break
-        //     }
-        // }
-        // console.log("Starting from id: " + lastProcessedID)
-        // for continueExecution {
-        //     temps, _ = wd.FindElements(selenium.ByCSSSelector, "div[id^='chat-messages-']")
-        //     currentLastProcessedID, _ := temps[len(temps)-1].GetAttribute("id")
+        try {
+            await wd.wait(until.urlContains("https://discord.com/channels"), 30000)
+        } catch (e) {
+            throw { message: "stuck at login, didn't jump to channels" }
+        }
+        // Wait for messages to appear
+        try {
+            await wd.wait(until.elementLocated(By.css("div[id^='chat-messages-']")), 30000)
+        } catch (e) {
+            throw { message: "cannot get messageIDs after 30 seconds" }
+        }
+        // Start main execution here
+        // Find last message at this time:
+        let lastProcessedID;
+        let lastMessageAuthor;
+        let lastProcessedElement;
+        let temps;
+        temps = await wd.findElements(By.css("div[id^='chat-messages-']"))
+        if (temps.length == 0) {
+            throw { message: "cannot get messageIDs a second time!?" }
+        }
+        lastProcessedElement = temps[temps.length - 1]
+        lastProcessedID = await lastProcessedElement.getAttribute("id")
+        // Get last message's author
+        for (let i = 1; ; i++) {
+            //     if i > len(temps) {
+            //         throw {message: "cannot get author of last message")
+            //     }
+            //     lastProcessedElement = temps[len(temps)-i]
+            //     lastProcessedElementID, _ := lastProcessedElement.GetAttribute("id")
+            //     anotherTemps, err := wd.FindElements(selenium.ByCSSSelector, "#"+lastProcessedElementID+">div[class^='contents']>h2[class^='header']>span[class^='headerText']>span[class^='username']")
+            //     if err != nil {
+            //         throw {message: "cannot get anotherTemps")
+            //     }
+            //     if len(anotherTemps) != 0 {
+            //         lastMessageAuthor, _ = anotherTemps[0].Text()
+            //         console.log("Initial last message's author: " + lastMessageAuthor)
+            //         lastProcessedElement = nil // This variable is no longer used for the rest of the method
+            //         break
+            //     }
+            // }
+            // console.log("Starting from id: " + lastProcessedID)
+            // for continueExecution {
+            //     temps, _ = wd.FindElements(selenium.ByCSSSelector, "div[id^='chat-messages-']")
+            //     currentLastProcessedID, _ := temps[len(temps)-1].GetAttribute("id")
 
-        //     // Construct dequeue of new messages (DO IT QUICK BEFORE DOM UPDATES!)
-        //     messageIDsToInspect := []string{}
-        //     for i := 1; ; i++ {
-        //         currentElementID, _ := temps[len(temps)-i].GetAttribute("id")
-        //         if currentElementID == lastProcessedID {
-        //             break
-        //         }
-        //         messageIDsToInspect = append([]string{currentElementID}, messageIDsToInspect...)
-        //     }
+            //     // Construct dequeue of new messages (DO IT QUICK BEFORE DOM UPDATES!)
+            //     messageIDsToInspect := []string{}
+            //     for i := 1; ; i++ {
+            //         currentElementID, _ := temps[len(temps)-i].GetAttribute("id")
+            //         if currentElementID == lastProcessedID {
+            //             break
+            //         }
+            //         messageIDsToInspect = append([]string{currentElementID}, messageIDsToInspect...)
+            //     }
 
-        //     lastProcessedID = currentLastProcessedID
-        //     for len(messageIDsToInspect) != 0 {
-        //         var currentMsgID string
-        //         currentMsgID, messageIDsToInspect = messageIDsToInspect[0], messageIDsToInspect[1:]
+            //     lastProcessedID = currentLastProcessedID
+            //     for len(messageIDsToInspect) != 0 {
+            //         var currentMsgID string
+            //         currentMsgID, messageIDsToInspect = messageIDsToInspect[0], messageIDsToInspect[1:]
 
-        //         // Update last message sent if any
-        //         anotherTemps, _ := wd.FindElements(selenium.ByCSSSelector, "#"+currentMsgID+">div[class^='contents']>h2[class^='header']>span[class^='headerText']>span[class^='username']")
-        //         if len(anotherTemps) != 0 {
-        //             lastMessageAuthor, _ = anotherTemps[0].Text()
-        //         }
+            //         // Update last message sent if any
+            //         anotherTemps, _ := wd.FindElements(selenium.ByCSSSelector, "#"+currentMsgID+">div[class^='contents']>h2[class^='header']>span[class^='headerText']>span[class^='username']")
+            //         if len(anotherTemps) != 0 {
+            //             lastMessageAuthor, _ = anotherTemps[0].Text()
+            //         }
 
-        //         // Get message body
-        //         temp, err = wd.FindElement(selenium.ByCSSSelector, "#"+currentMsgID+">div[class^='contents']>div[class^='markup']")
-        //         if err != nil {
-        //             return errors.New("cannot find message body")
-        //         }
-        //         messageContent, _ := temp.Text()
+            //         // Get message body
+            //         temp, err = wd.FindElement(selenium.ByCSSSelector, "#"+currentMsgID+">div[class^='contents']>div[class^='markup']")
+            //         if err != nil {
+            //             throw {message: "cannot find message body")
+            //         }
+            //         messageContent, _ := temp.Text()
 
-        //         if debug {
-        //             console.log("Msg: " + messageContent)
-        //         }
-        //         // Check if contains any bye signs
-        //         if containsBye(messageContent) && lastMessageAuthor != os.Getenv("DISCORD_USERNAME") {
-        //             if debug {
-        //                 console.log("Reacting to msg id " + currentMsgID)
-        //             }
-        //             // React with :wave:
-        //             temp, _ = wd.FindElement(selenium.ByCSSSelector, "#"+currentMsgID)
-        //             temp.Click()
-        //             temp.SendKeys(selenium.RightArrowKey)
-        //             temp2, err := wd.FindElement(selenium.ByCSSSelector, "#"+currentMsgID+">div[class^='buttonContainer']>div[class^='buttons']>div[class^='wrapper']>div[class^='button'][aria-label='Add Reaction']")
-        //             if err != nil {
-        //                 return errors.New("cannot find add reaction button")
-        //             }
-        //             temp2.Click()
-        //             temp2.Click()
-        //             err = wd.WaitWithTimeoutAndInterval(func(wd selenium.WebDriver) (bool, error) {
-        //                 _, err := wd.FindElement(selenium.ByCSSSelector, ("#emoji-picker-tab-panel>div[class^='emojiPicker']>div[class^='header']>div[class^='searchBar']>div[class^='inner']>input[class^='input']"))
-        //                 if err != nil {
-        //                     temp.Click()
-        //                     temp.SendKeys(selenium.RightArrowKey)
-        //                     temp2.Click()
-        //                     temp2.Click()
-        //                     return false, nil
-        //                 }
-        //                 return true, nil
-        //             }, 10*time.Second, time.Second/2)
-        //             if err != nil {
-        //                 // Skip cuz golang is iffy cuz of selenium server java
-        //                 continue
-        //             }
+            //         if debug {
+            //             console.log("Msg: " + messageContent)
+            //         }
+            //         // Check if contains any bye signs
+            //         if containsBye(messageContent) && lastMessageAuthor != os.Getenv("DISCORD_USERNAME") {
+            //             if debug {
+            //                 console.log("Reacting to msg id " + currentMsgID)
+            //             }
+            //             // React with :wave:
+            //             temp, _ = wd.FindElement(selenium.ByCSSSelector, "#"+currentMsgID)
+            //             temp.Click()
+            //             temp.SendKeys(selenium.RightArrowKey)
+            //             temp2, err := wd.FindElement(selenium.ByCSSSelector, "#"+currentMsgID+">div[class^='buttonContainer']>div[class^='buttons']>div[class^='wrapper']>div[class^='button'][aria-label='Add Reaction']")
+            //             if err != nil {
+            //                 throw {message: "cannot find add reaction button")
+            //             }
+            //             temp2.Click()
+            //             temp2.Click()
+            //             err = wd.WaitWithTimeoutAndInterval(func(wd selenium.WebDriver) (bool, error) {
+            //                 _, err := wd.FindElement(selenium.ByCSSSelector, ("#emoji-picker-tab-panel>div[class^='emojiPicker']>div[class^='header']>div[class^='searchBar']>div[class^='inner']>input[class^='input']"))
+            //                 if err != nil {
+            //                     temp.Click()
+            //                     temp.SendKeys(selenium.RightArrowKey)
+            //                     temp2.Click()
+            //                     temp2.Click()
+            //                     return false, nil
+            //                 }
+            //                 return true, nil
+            //             }, 10*time.Second, time.Second/2)
+            //             if err != nil {
+            //                 // Skip cuz golang is iffy cuz of selenium server java
+            //                 continue
+            //             }
 
-        //             temp, err = wd.FindElement(selenium.ByCSSSelector, ("#emoji-picker-tab-panel>div[class^='emojiPicker']>div[class^='header']>div[class^='searchBar']>div[class^='inner']>input[class^='input']"))
-        //             if err != nil {
-        //                 return errors.New("cannot find reaction search bar")
-        //             }
-        //             temp.Click()
-        //             temp.SendKeys("wav" + selenium.EnterKey) // "wav" from "wave" is enough to default pick wave emoji
-        //         }
+            //             temp, err = wd.FindElement(selenium.ByCSSSelector, ("#emoji-picker-tab-panel>div[class^='emojiPicker']>div[class^='header']>div[class^='searchBar']>div[class^='inner']>input[class^='input']"))
+            //             if err != nil {
+            //                 throw {message: "cannot find reaction search bar")
+            //             }
+            //             temp.Click()
+            //             temp.SendKeys("wav" + selenium.EnterKey) // "wav" from "wave" is enough to default pick wave emoji
+            //         }
 
-        //     }
-        // }
-        // console.log("Api Execution end")
-        // return nil
+            //     }
+        }
+        console.log("Api Execution end")
     }
 
     /**
@@ -257,7 +239,7 @@ class SignoffAutomatorApi {
 
         let sevenPMToday = new Date();
         sevenPMToday.setHours(19, 0, 0, 0);
-    
+
         let sleep;
         if (now < sevenPMToday) {
             // sleep is in ms
