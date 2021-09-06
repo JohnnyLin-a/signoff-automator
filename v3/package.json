@@ -1,0 +1,21 @@
+{
+  "name": "signoff-automator",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./cmd/signoffautomator/signoffautomator.js",
+  "scripts": {
+    "debug": "DEBUG=true node ."
+  },
+  "bin": {
+    "signoffautomator": "./cmd/signoffautomator/signoffautomator.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/johnnylin-a/signoff-automator"
+  },
+  "author": "JohnnyLin-a",
+  "license": "MIT",
+  "dependencies": {
+    "selenium-webdriver": "^4.0.0-rc-1"
+  }
+}
