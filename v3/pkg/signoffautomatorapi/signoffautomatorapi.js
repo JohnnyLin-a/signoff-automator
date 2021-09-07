@@ -65,7 +65,8 @@ class SignoffAutomatorApi {
         console.log("Creating profile object")
         let ffOptions = new firefox.Options()
         ffOptions.setProfile("../profile")
-        ffOptions.addArguments(["--width=1920", "--height=1080"])
+        ffOptions.addArguments("--width=1848")
+        ffOptions.addArguments("--height=931")
 
         console.log("Start autoclose thread (timeout in js)")
         this.#autoCloseTimer()
@@ -172,17 +173,7 @@ class SignoffAutomatorApi {
                         console.log("Reacting to msg id " + currentMsgID)
                     }
                     // React with :wave:
-                    temp = await wd.findElement(By.css("#" + currentMsgID))
-                    // await wd.actions().move({ origin: temp }).move({ origin: temp, x: 30, y: 0 }).perform()
-                    await wd.actions().move({ origin: temp }).move({ origin: temp, x: 30, y: -5 }).press().sendKeys(Key.ARROW_RIGHT).perform()
-                    temp2 = await wd.findElement(By.css("#" + currentMsgID + ">div[class^='buttonContainer']>div[class^='buttons']>div[class^='wrapper']>div[class^='button'][aria-label='Add Reaction']"))
-                    await wd.wait(until.elementLocated(By.css("#" + currentMsgID + ">div[class^='buttonContainer']>div[class^='buttons']>div[class^='wrapper']>div[class^='button'][aria-label='Add Reaction']")), 5000)
-                    temp2.click()
-                    temp2.click()
-                    await wd.wait(until.elementLocated(By.css("#emoji-picker-tab-panel>div[class^='emojiPicker']>div[class^='header']>div[class^='searchBar']>div[class^='inner']>input[class^='input']")), 5000)
-                    temp = await wd.findElement(By.css(("#emoji-picker-tab-panel>div[class^='emojiPicker']>div[class^='header']>div[class^='searchBar']>div[class^='inner']>input[class^='input']")))
-                    temp.click()
-                    temp.sendKeys("wav" + Key.ENTER) // "wav" from "wave" is enough to default pick wave emoji
+                    await wd.actions().sendKeys("+:wave:" + Key.ENTER).perform()
                 }
             }
         }

@@ -12,6 +12,10 @@ let main = async function() {
         await api.execute()
     } catch ({ message }) {
         console.log("Error when Executing api", message)
+        if (SignoffAutomatorApi.getDebug()) {
+            SignoffAutomatorApi.resetTimeout();
+        }
+        process.exit(1)
     }
     console.log("Main execution done");
     if (SignoffAutomatorApi.getDebug()) {
