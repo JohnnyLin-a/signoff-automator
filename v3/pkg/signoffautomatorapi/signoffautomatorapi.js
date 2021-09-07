@@ -65,15 +65,13 @@ class SignoffAutomatorApi {
         console.log("Creating profile object")
         let ffOptions = new firefox.Options()
         ffOptions.setProfile("../profile")
-        ffOptions.addArguments("--width=1848")
-        ffOptions.addArguments("--height=931")
 
         console.log("Start autoclose thread (timeout in js)")
         this.#autoCloseTimer()
 
         console.log("Setting options")
         if (!SignoffAutomatorApi.#debug) {
-            ffOptions.setHeadless(true)
+            ffOptions.headless().windowSize({ width: 1848, height: 931 })
         }
 
         let wd = await new Builder()
@@ -215,7 +213,7 @@ class SignoffAutomatorApi {
             sleep = 3600000
         }
         SignoffAutomatorApi.#timeout = setTimeout(() => {
-            SignoffAutomatorApi.#continueExecution = false
+            this.#continueExecution = false
             console.log("AutoCloseTimer Execution end")
         }, sleep)
     }
