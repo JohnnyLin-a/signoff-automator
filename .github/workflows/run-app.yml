@@ -3,6 +3,8 @@ name: run-app
 on:
   schedule:
     - cron: '0 20 * * 1-5'
+  push:
+    branches: [ master ]
 
 jobs:
   run-app:
