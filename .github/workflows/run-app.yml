@@ -1,0 +1,48 @@
+name: run-app
+
+on:
+  schedule:
+    - cron: '0 20 * * 1-5'
+
+jobs:
+  run-app:
+    runs-on: ubuntu-latest
+    env:
+      DEBUG: ${{ secrets.DEBUG }}
+      DISCORD_CHANNEL_ID: ${{ secrets.DISCORD_CHANNEL_ID }}
+      DISCORD_LOGIN: ${{ secrets.DISCORD_LOGIN }}
+      DISCORD_PASSWORD: ${{ secrets.DISCORD_PASSWORD }}
+      DISCORD_SERVER_ID: ${{ secrets.DISCORD_SERVER_ID }}
+      DISCORD_USERNAME: ${{ secrets.DISCORD_USERNAME }}
+    steps:
+      - 
+        name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          ref: master
+      - 
+        name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '^1.17.0'
+      -
+        name: Login to GHCR
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_SECRET }}
+      -
+        name: Install pre-requisites and setup
+        run : |
+          apt-get update && apt-get install -y firefox firefox-geckodriver wget
+          ./setup_wf.sh
+      -
+        name: Execute in v2
+        run : |
+          cd v2
+          ./build_wf.sh
+          ./signoffautomator
+          rm signoffautomator
+          cd ..
+          rm -r profile
