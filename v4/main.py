@@ -7,7 +7,7 @@ api = SignoffAutomatorApi()
 try:
     api.execute()
 except RuntimeError as e:
-    print(e)
+    print("Error when Executing api", e)
     os._exit(1)
 #     console.log("Error when Executing api", message)
 #     if (SignoffAutomatorApi.getDebug()) {
