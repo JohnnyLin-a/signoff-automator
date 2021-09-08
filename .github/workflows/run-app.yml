@@ -45,6 +45,10 @@ jobs:
           cd v2
           ./build_wf.sh
           ./signoffautomator
-          rm signoffautomator
-          cd ..
-          rm -r profile
+      -
+        name: Cleanup
+        if: always()
+        run : |
+          if [ ${PWD##*/} = 'v2' ] ; then cd ..; fi
+          rm -f v2/signoffautomator
+          rm -rf profile
