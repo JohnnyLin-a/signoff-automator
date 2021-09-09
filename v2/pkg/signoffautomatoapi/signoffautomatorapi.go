@@ -251,7 +251,12 @@ func Execute() error {
 					return errors.New("cannot find reaction search bar")
 				}
 				temp.Click()
-				temp.SendKeys("wav" + selenium.EnterKey) // "wav" from "wave" is enough to default pick wave emoji
+				time.Sleep(time.Second)
+				temp.SendKeys("wav") // "wav" from "wave" is enough to default pick wave emoji
+				time.Sleep(time.Second / 2)
+				// Can't just send keys to wd... what a weird way to send an enter key
+				wd.KeyDown(selenium.EnterKey)
+				wd.KeyUp(selenium.EnterKey)
 			}
 
 		}
