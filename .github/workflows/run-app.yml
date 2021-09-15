@@ -42,7 +42,7 @@ jobs:
         run : |
           cd v2
           ./build_wf.sh
-          while [ $? -ne 0 ]; do ./signoffautomator; done
+          ./signoffautomator
       -
         name: Cleanup
         if: always()
