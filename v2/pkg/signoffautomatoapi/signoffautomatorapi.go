@@ -284,6 +284,8 @@ func containsBye(s string) bool {
 		return true
 	} else if strings.Contains(strings.ToLower(s), "see you") {
 		return true
+	} else if strings.Contains(strings.ToLower(s), "heading out") {
+		return true
 	}
 	return false
 }
